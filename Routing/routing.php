@@ -1,5 +1,6 @@
 <?php
 
+include('sqlQueries.php');
 // NEXT:
 // Todo: Graph mit allen Routen und Minimalzeit machen?
 // Todo: Anzahl umsteigen in Graph speichern. Mit Route-Dingens.
@@ -9,64 +10,9 @@
 
 $db = new PDO('pgsql:dbname=tt23;host=localhost');
 
-$getStopsFromTripQuery = $db->prepare('
-select trip_id, block_id, stop_id, stop_id_short, stop_name, arrival_time, trip_headsign from graph
-where trip_id = :tripId and departure_time > :startTime; --hier transfer table einbauen');
+$getStopsFromTripQuery = $db->prepare(getStopsFromTripQuery());
 
-$getNextTripsQuery = $db->prepare('
-select graph.trip_id,
-       graph.block_id,
-       graph.service_id,
-       transfers.min_transfer_time,
-       departure_time,
-       trip_headsign,
-       calendar_dates.date as calender_date,
-       calendar_dates.exception_type,
-       extract(\'ISODOW\' from :departureDate) as weekday,
-       calendar.sunday,
-       calendar.start_date::date,
-       calendar.end_date::date
-from graph
-         left join transfers on transfers.from_stop_id = :startStopId and transfers.to_stop_id = stop_id
-         left join calendar_dates on graph.service_id = calendar_dates.service_id
-    and calendar_dates.date = :departureDate::date
-         join calendar
-              on graph.service_id = calendar.service_id
-                     --check if trip is available at that weekday
-                  and ((CASE extract(\'ISODOW\' from :departureDate::date)
-                            WHEN 1 THEN calendar.monday = \'1\'
-                            WHEN 2 THEN calendar.tuesday = \'1\'
-                            WHEN 3 THEN calendar.wednesday = \'1\'
-                            WHEN 4 THEN calendar.thursday = \'1\'
-                            WHEN 5 THEN calendar.friday = \'1\'
-                            WHEN 6 THEN calendar.saturday = \'1\'
-                            WHEN 7 THEN calendar.sunday = \'1\'
-                            END
-                            --check if trip is in date range
-                      and :departureDate::date > calendar.start_date::date
-                      and :departureDate::date < calendar.end_date::date
-                            --check if trip is not exceptet at this date
-                      and (calendar_dates.exception_type <> \'2\' or calendar_dates.exception_type is null
-                            )
-                             --check if trip is an exception at this date
-                           ) or calendar_dates.exception_type = \'1\')
-where
-    ((stop_id IN
-    (select to_stop_id from transfers where transfers.from_stop_id = :startStopId)
-    )
-    or 
-    stop_id = :startStopId
-    )
-and (departure_time
-                    BETWEEN :departureTime
-                    and (:departureTime + interval \'+ 1 hour\'))
-  --when is is not the same vehicle, factor the transfer time in
-and (CASE WHEN graph.block_id != \'\' or graph.block_id != :block_id then
-graph.departure_time > (:departureTime + make_interval(secs => transfers.min_transfer_time))
-    else
-true
-END)
-ORDER BY departure_time;');
+$getNextTripsQuery = $db->prepare(getNextTripsQuery());
 
 // -------- Initial Values  -----------------------
 

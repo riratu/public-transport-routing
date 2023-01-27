@@ -38,6 +38,7 @@ CREATE TABLE stop_times
 
 CREATE INDEX ON stop_times (trip_id);
 CREATE INDEX ON stop_times (stop_id);
+CREATE INDEX ON stop_times (departure_time);
 
 -- IMPORT
 COPY stop_times (trip_id, arrival_time, departure_time, stop_id, stop_sequence, pickup_type, drop_off_type)
@@ -46,6 +47,7 @@ COPY stop_times (trip_id, arrival_time, departure_time, stop_id, stop_sequence, 
 
 ALTER TABLE stop_times ALTER COLUMN arrival_time TYPE INTERVAL USING arrival_time::interval;
 ALTER TABLE stop_times ALTER COLUMN departure_time TYPE INTERVAL USING departure_time::interval;
+
 
 
 CREATE TABLE transfers
@@ -80,6 +82,10 @@ CREATE TABLE trips
 CREATE INDEX ON trips (route_id);
 CREATE INDEX ON trips (trip_id);
 
+CREATE INDEX ON trips (trip_id, service_id, block_id);
+CREATE INDEX ON trips (block_id, service_id, trip_id );
+
+drop index trips_service_id_block_id_idx;
 -- IMPORT
 COPY trips (route_id, service_id, trip_id, trip_headsign, trip_short_name, direction_id, block_id)
     FROM '/Users/gianni/Documents/Projekte/privat/mountain/Routing/gtfs_fp2023_2022-12-07_08-31/trips.txt'
