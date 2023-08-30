@@ -104,7 +104,7 @@ function getTripsFromStop($startId, $getNextTripsQuery, &$traveledTrips, $startD
 //    }
     $departureTime = $visitedStops[$currentStopShort]['arrival_time'];
     $blockId = $visitedStops[$currentStopShort]['block_id'];
-    $getNextTripsQuery->execute(['departureTime' => $departureTime, 'departureDate' => $startDate, 'startStopId' => $startId, 'block_id' => $blockId]);
+    $getNextTripsQuery->execute(['departureTime' => $departureTime, 'departureDate' => $startDate, 'startStopId' => $startId]);
     while ($row = $getNextTripsQuery->fetch(PDO::FETCH_ASSOC)) {
         //if ($row['trip_id'] === null) continue;
 
